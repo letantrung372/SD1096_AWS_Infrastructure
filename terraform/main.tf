@@ -1,13 +1,14 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 4.0"
-    }
-  }
-}
+# terraform {
+#   required_providers {
+#     aws = {
+#       source  = "hashicorp/aws"
+#       version = "~> 4.0"
+#     }
+#   }
+# }
 
 provider "aws" {
+  profile = "practical-devop-aws"
   region = var.aws_region
 }
 
@@ -36,11 +37,11 @@ module "ecr" {
   environment     = var.environment
 }
 
-module "jenkins" {
-  source = "./modules/jenkins"
+# module "jenkins" {
+#   source = "./modules/jenkins"
   
-  instance_type = var.jenkins_instance_type
-  subnet_id     = module.vpc.public_subnet_ids[0]
-  vpc_id        = module.vpc.vpc_id
-  environment   = var.environment
-}
+#   instance_type = var.jenkins_instance_type
+#   subnet_id     = module.vpc.public_subnet_ids[0]
+#   vpc_id        = module.vpc.vpc_id
+#   environment   = var.environment
+# }
