@@ -40,8 +40,31 @@ variable "repository_name" {
   default     = "practical-devops-ecr"
 }
 
-variable "jenkins_instance_type" {
-  description = "Instance type for Jenkins server"
+# variable "jenkins_instance_type" {
+#   description = "Instance type for Jenkins server"
+#   type        = string
+#   default     = "t2.medium"
+# }
+
+variable "instance_type" {
+  description = "EC2 instance type"
   type        = string
-  default     = "t2.medium"
+  default     = "t2.micro"
+}
+
+variable "key_name" {
+  description = "Name of the SSH key pair"
+  type        = string
+}
+
+variable "ami_id" {
+  description = "AMI ID for EC2 instance"
+  type        = string
+  default     = "ami-0735c191cf914754d"
+}
+
+variable "root_volume_size" {
+  description = "Size of the root volume in GB"
+  type        = number
+  default     = 8
 }

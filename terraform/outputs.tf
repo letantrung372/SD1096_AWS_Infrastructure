@@ -32,3 +32,19 @@ output "jenkins_info" {
     instance_id = module.jenkins.jenkins_instance_id
   }
 }
+
+output "instance_info" {
+  description = "EC2 Instance Information"
+  value = {
+    instance_id = module.ec2.instance_id
+    public_ip   = module.ec2.public_ip
+    public_dns  = module.ec2.public_dns
+  }
+}
+
+output "security_group_info" {
+  description = "Security Group Information"
+  value = {
+    security_group_id = module.security.security_group_id
+  }
+}

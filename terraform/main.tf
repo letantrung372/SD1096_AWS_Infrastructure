@@ -36,11 +36,30 @@ module "ecr" {
   environment     = var.environment
 }
 
-module "jenkins" {
-  source = "./modules/jenkins"
+module "security" {
+  source = "./modules/security"
   
-  instance_type = var.jenkins_instance_type
-  subnet_id     = module.vpc.public_subnet_ids[0]
-  vpc_id        = module.vpc.vpc_id
-  environment   = var.environment
+  environment = var.environment
+  vpc_id      = module.vpc.vpc_id
 }
+
+module "ec2" {
+  source = "./modules/ec2"
+  
+  environment         = var.environment
+  subnet_id          = module.vpc.subnet_id
+  security_group_ids = [module.security.security_group_id]
+  instance_type      = var.instance_type
+  key_name           = var.key_name
+  ami_id             = var.ami_id
+  root_volume_size   = var.root_volume_size
+}
+
+# module "jenkins" {
+#   source = "./modules/jenkins"
+  
+#   instance_type = var.jenkins_instance_type
+#   subnet_id     = module.vpc.public_subnet_ids[0]
+#   vpc_id        = module.vpc.vpc_id
+#   environment   = var.environment
+# }
