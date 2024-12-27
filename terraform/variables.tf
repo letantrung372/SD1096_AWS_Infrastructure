@@ -19,7 +19,7 @@ variable "vpc_cidr" {
 variable "availability_zones" {
   description = "Availability zones"
   type        = list(string)
-  default     = ["us-west-2a", "us-west-2b"]
+  default     = ["ap-southeast-1a", "ap-southeast-1b"]
 }
 
 variable "public_subnet_cidrs" {
@@ -49,19 +49,19 @@ variable "repository_name" {
 variable "instance_type" {
   description = "EC2 instance type"
   type        = string
-  default     = "t2.mediumn"
+  default     = "t2.medium"
 }
 
 variable "key_name" {
   description = "Name of the SSH key pair"
   type        = string
-  default     = "EC2KeyName"
+  default     = "ec2-keypair"
 }
 
 variable "ami_id" {
   description = "AMI ID for EC2 instance"
   type        = string
-  default     = "ami-0735c191cf914754d"
+  default     = "ami-0f935a2ecd3a7bd5c"
 }
 
 variable "root_volume_size" {
