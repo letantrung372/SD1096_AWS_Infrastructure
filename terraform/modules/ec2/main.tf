@@ -11,7 +11,7 @@ resource "aws_instance" "EC2" {
     volume_type = "gp3"
   }
 
-  user_data = file("${path.module}/user_data.sh")
+  user_data = file("${path.module}/installation.sh")
 
   tags = {
     Name = "${var.environment}-ec2"

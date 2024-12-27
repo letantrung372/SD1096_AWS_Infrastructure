@@ -34,4 +34,22 @@ resource "aws_security_group" "ec2" {
   tags = {
     Name = "${var.environment}-ec2-sg"
   }
+
+  # Add Jenkins port
+  ingress {
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Jenkins web interface"
+  }
+
+  # Add Jenkins agents port (optional, if you plan to use Jenkins agents)
+  ingress {
+    from_port   = 50000
+    to_port     = 50000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Jenkins agents communication"
+  }
 }
