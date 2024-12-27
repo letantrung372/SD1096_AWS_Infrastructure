@@ -24,14 +24,14 @@ output "ecr_info" {
   }
 }
 
-output "jenkins_info" {
-  description = "Jenkins Instance Information"
-  value = {
-    public_ip  = module.jenkins.jenkins_public_ip
-    private_ip = module.jenkins.jenkins_private_ip
-    instance_id = module.jenkins.jenkins_instance_id
-  }
-}
+# output "jenkins_info" {
+#   description = "Jenkins Instance Information"
+#   value = {
+#     public_ip  = module.jenkins.jenkins_public_ip
+#     private_ip = module.jenkins.jenkins_private_ip
+#     instance_id = module.jenkins.jenkins_instance_id
+#   }
+# }
 
 output "instance_info" {
   description = "EC2 Instance Information"

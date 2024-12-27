@@ -10,9 +10,9 @@ resource "aws_eks_cluster" "main" {
     Environment = var.environment
   }
 
-  depends_on = [
-    aws_iam_role_policy_attachment.eks_cluster_policy
-  ]
+  # depends_on = [
+  #   aws_iam_role_policy_attachment.eks_cluster_policy
+  # ]
 }
 
 resource "aws_iam_role" "eks_cluster" {

@@ -1,13 +1,14 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 4.0"
-    }
-  }
-}
+# terraform {
+#   required_providers {
+#     aws = {
+#       source  = "hashicorp/aws"
+#       version = "~> 4.0"
+#     }
+#   }
+# }
 
 provider "aws" {
+  profile = "practical-devop-aws"
   region = var.aws_region
 }
 
@@ -55,8 +56,8 @@ module "ec2" {
   root_volume_size   = var.root_volume_size
 }
 
-# module "jenkins" {
-#   source = "./modules/jenkins"
+# # module "jenkins" {
+# #   source = "./modules/jenkins"
   
 #   instance_type = var.jenkins_instance_type
 #   subnet_id     = module.vpc.public_subnet_ids[0]
