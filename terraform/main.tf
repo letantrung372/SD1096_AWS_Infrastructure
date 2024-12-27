@@ -47,8 +47,8 @@ module "security" {
 module "ec2" {
   source = "./modules/ec2"
   
-  environment         = var.environment
-  subnet_id          = module.vpc.subnet_id
+  environment        = var.environment
+  subnet_id          = module.vpc.public_subnet_ids
   security_group_ids = [module.security.security_group_id]
   instance_type      = var.instance_type
   key_name           = var.key_name

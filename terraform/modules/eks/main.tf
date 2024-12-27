@@ -1,6 +1,6 @@
-resource "aws_eks_cluster" "main" {
+resource "aws_eks_cluster" "eks_cluster" {
   name     = var.cluster_name
-  role_arn = aws_iam_role.eks_cluster.arn
+  role_arn = aws_iam_role.aws_iam_role.arn
 
   vpc_config {
     subnet_ids = var.subnet_ids
@@ -15,7 +15,7 @@ resource "aws_eks_cluster" "main" {
   # ]
 }
 
-resource "aws_iam_role" "eks_cluster" {
+resource "aws_iam_role" "aws_iam_role" {
   name = "${var.cluster_name}-cluster-role"
 
   assume_role_policy = jsonencode({

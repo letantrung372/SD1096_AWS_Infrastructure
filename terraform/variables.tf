@@ -49,12 +49,13 @@ variable "repository_name" {
 variable "instance_type" {
   description = "EC2 instance type"
   type        = string
-  default     = "t2.micro"
+  default     = "t2.mediumn"
 }
 
 variable "key_name" {
   description = "Name of the SSH key pair"
   type        = string
+  default     = "EC2KeyName"
 }
 
 variable "ami_id" {
@@ -66,5 +67,5 @@ variable "ami_id" {
 variable "root_volume_size" {
   description = "Size of the root volume in GB"
   type        = number
-  default     = 8
+  default     = 30
 }
