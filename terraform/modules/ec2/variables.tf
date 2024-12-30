@@ -21,7 +21,7 @@ variable "instance_type" {
 variable "key_name" {
   description = "Name of the SSH key pair"
   type        = string
-  default     = "EC2KeyName"
+  default     = "ec2-keypair"
 }
 
 variable "ami_id" {

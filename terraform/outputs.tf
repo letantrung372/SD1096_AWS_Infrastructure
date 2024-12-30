@@ -48,3 +48,19 @@ output "security_group_info" {
     security_group_id = module.security.security_group_id
   }
 }
+
+output "private_key" {
+  value       = module.security.private_key
+  sensitive   = true
+  description = "Save this private key securely!"
+}
+
+output "internet_gateway_id" {
+  description = "ID of the Internet Gateway"
+  value       = module.vpc.internet_gateway_id
+}
+
+output "public_route_table_id" {
+  description = "ID of the public route table"
+  value       = module.vpc.public_route_table_id
+}
