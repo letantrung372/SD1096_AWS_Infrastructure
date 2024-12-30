@@ -21,6 +21,13 @@ module "vpc" {
   public_subnet_cidrs = var.public_subnet_cidrs
 }
 
+module "iam" {
+  source = "./modules/iam"
+
+  cluster_name = var.cluster_name
+  # tags        = local.tags
+}
+
 module "eks" {
   source = "./modules/eks"
   
@@ -28,6 +35,24 @@ module "eks" {
   vpc_id          = module.vpc.vpc_id
   subnet_ids      = module.vpc.public_subnet_ids
   environment     = var.environment
+  cluster_role_arn       = module.iam.cluster_role_arn
+  public_subnet_ids      = module.networking.public_subnet_ids
+  private_subnet_ids     = module.networking.private_subnet_ids
+  endpoint_public_access  = true
+  endpoint_private_access = true
+}
+
+module "node_groups" {
+  source = "./modules/node_groups"
+
+  cluster_name   = var.cluster_name
+  node_role_arn  = module.iam.node_role_arn
+  subnet_ids     = module.networking.private_subnet_ids
+  instance_types = ["t3.medium"]
+  desired_size   = 2
+  min_size       = 1
+  max_size       = 4
+  # tags          = local.tags
 }
 
 module "ecr" {
