@@ -36,8 +36,6 @@ module "eks" {
   subnet_ids      = module.vpc.public_subnet_ids
   environment     = var.environment
   cluster_role_arn       = module.iam.cluster_role_arn
-  public_subnet_ids      = module.networking.public_subnet_ids
-  private_subnet_ids     = module.networking.private_subnet_ids
   endpoint_public_access  = true
   endpoint_private_access = true
 }
