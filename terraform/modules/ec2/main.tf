@@ -1,45 +1,75 @@
-resource "aws_instance" "ec2_test" {
-  ami           = var.ami_id
+# modules/ec2/main.tf
+data "aws_ami" "amazon_linux_2" {
+  most_recent = true
+  owners      = ["amazon"]
+
+  filter {
+    name   = "name"
+    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
+  }
+}
+
+resource "aws_launch_template" "main" {
+  name_prefix   = "${var.environment}-template"
+  image_id      = data.aws_ami.amazon_linux_2.id
   instance_type = var.instance_type
-  subnet_id     = var.subnet_id
 
-  vpc_security_group_ids = var.security_group_ids
-  key_name               = var.key_name
-
-  root_block_device {
-    volume_size = var.root_volume_size
-    volume_type = "gp3"
+  network_interfaces {
+    associate_public_ip_address = true  # Changed to true to access Jenkins
+    security_groups            = var.security_group_ids
   }
 
-  # user_data = file("${path.module}/installation.sh")
-  user_data = <<-EOF
-              #!/bin/bash
-              # install Jenkins
-              sudo yum update -y
-              sudo wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
-              sudo rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
-              sudo yum upgrade -y
-              sudo dnf install java-17-amazon-corretto -y
-              sudo yum install jenkins -y
-              sudo systemctl enable jenkins
+  iam_instance_profile {
+    name = var.instance_profile
+  }
 
-              # install docker
-              sudo yum install docker -y
-              sudo service docker start
-              sudo usermod -a -G docker jenkins
+  user_data = base64encode(file("installation.sh"))
 
-              sudo systemctl start jenkins
+  tag_specifications {
+    resource_type = "instance"
+    tags = {
+      Name        = "${var.environment}-instance"
+      Environment = var.environment
+    }
+  }
 
-              # install git
-              sudo yum install git -y
+  lifecycle {
+    create_before_destroy = true
+  }
+}
 
-              # install kubectl
-              sudo curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.31.2/2024-11-15/bin/linux/amd64/kubectl
-              sudo chmod +x kubectl
-              sudo mv kubectl /usr/local/bin/
-              EOF
+# Add new security group rule for Jenkins
+resource "aws_security_group_rule" "jenkins" {
+  type              = "ingress"
+  from_port         = 8080
+  to_port           = 8080
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]  # In production, restrict to specific IP ranges
+  security_group_id = var.security_group_ids[0]
+}
 
-  tags = {
-    Name = "${var.environment}-ec2"
+resource "aws_autoscaling_group" "main" {
+  name                = "${var.environment}-asg"
+  desired_capacity    = var.asg_desired_capacity
+  max_size            = var.asg_max_size
+  min_size            = var.asg_min_size
+  target_group_arns   = var.target_group_arns
+  vpc_zone_identifier = var.subnet_ids
+
+  launch_template {
+    id      = aws_launch_template.main.id
+    version = "$Latest"
+  }
+
+  tag {
+    key                 = "Name"
+    value               = "${var.environment}-instance"
+    propagate_at_launch = true
+  }
+
+  tag {
+    key                 = "Environment"
+    value               = var.environment
+    propagate_at_launch = true
   }
 }

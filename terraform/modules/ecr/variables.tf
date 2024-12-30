@@ -1,11 +1,5 @@
-variable "repository_name" {
-  description = "Name of the ECR repository"
-  type        = string
-  default     = "practical-devops-ecr"
-}
-
+# modules/ecr/variables.tf
 variable "environment" {
   description = "Environment name"
   type        = string
-  default     = "dev"
 }

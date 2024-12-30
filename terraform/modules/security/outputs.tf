@@ -1,10 +1,15 @@
-output "security_group_id" {
-  description = "ID of the security group"
-  value       = aws_security_group.ec2.id
+# modules/security_groups/outputs.tf
+output "eks_cluster_sg_id" {
+  description = "ID of EKS cluster security group"
+  value       = aws_security_group.eks_cluster.id
 }
 
-output "private_key" {
-  value       = tls_private_key.private_key.private_key_pem
-  sensitive   = true
-  description = "Save this private key securely!"
+output "eks_nodes_sg_id" {
+  description = "ID of EKS nodes security group"
+  value       = aws_security_group.eks_nodes.id
+}
+
+output "ec2_sg_id" {
+  description = "ID of EC2 security group"
+  value       = aws_security_group.ec2.id
 }

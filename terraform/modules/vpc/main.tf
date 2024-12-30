@@ -1,4 +1,5 @@
-resource "aws_vpc" "vpc" {
+# modules/vpc/main.tf
+resource "aws_vpc" "main" {
   cidr_block           = var.vpc_cidr
   enable_dns_hostnames = true
   enable_dns_support   = true
@@ -9,38 +10,8 @@ resource "aws_vpc" "vpc" {
   }
 }
 
-resource "aws_subnet" "subnet" {
-  count             = length(var.public_subnet_cidrs)
-  vpc_id            = aws_vpc.vpc.id
-  cidr_block        = var.public_subnet_cidrs[count.index]
-  availability_zone = var.availability_zones[count.index]
-
-  map_public_ip_on_launch = true
-
-  tags = {
-    Name        = "${var.environment}-public-subnet-${count.index + 1}"
-    Environment = var.environment
-  }
-}
-
-resource "aws_subnet" "private" {
-  count             = length(var.availability_zones)
-  vpc_id            = aws_vpc.vpc.id
-  cidr_block        = cidrsubnet(var.vpc_cidr, 8, count.index + length(var.availability_zones))
-  availability_zone = var.availability_zones[count.index]
-
-  tags = merge(
-    var.tags,
-    {
-      Name                                        = "${var.cluster_name}-private-${count.index + 1}"
-      "kubernetes.io/cluster/${var.cluster_name}" = "shared"
-      "kubernetes.io/role/internal-elb"          = "1"
-    }
-  )
-}
-
-resource "aws_internet_gateway" "gateway" {
-  vpc_id = aws_vpc.vpc.id
+resource "aws_internet_gateway" "main" {
+  vpc_id = aws_vpc.main.id
 
   tags = {
     Name        = "${var.environment}-igw"
@@ -48,69 +19,92 @@ resource "aws_internet_gateway" "gateway" {
   }
 }
 
+resource "aws_subnet" "public" {
+  count             = length(var.public_subnets)
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = var.public_subnets[count.index]
+  availability_zone = var.azs[count.index]
+
+  map_public_ip_on_launch = true
+
+  tags = {
+    Name        = "${var.environment}-public-${var.azs[count.index]}"
+    Environment = var.environment
+    "kubernetes.io/role/elb" = "1"
+  }
+}
+
+resource "aws_subnet" "private" {
+  count             = length(var.private_subnets)
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = var.private_subnets[count.index]
+  availability_zone = var.azs[count.index]
+
+  tags = {
+    Name        = "${var.environment}-private-${var.azs[count.index]}"
+    Environment = var.environment
+    "kubernetes.io/role/internal-elb" = "1"
+  }
+}
+
 resource "aws_eip" "nat" {
+  count  = length(var.public_subnets)
   domain = "vpc"
 
-  tags = merge(
-    var.tags,
-    {
-      Name = "${var.cluster_name}-nat-eip"
-    }
-  )
+  tags = {
+    Name        = "${var.environment}-nat-${var.azs[count.index]}"
+    Environment = var.environment
+  }
 }
 
 resource "aws_nat_gateway" "main" {
-  allocation_id = aws_eip.nat.id
-  subnet_id     = aws_subnet.subnet[0].id
+  count         = length(var.public_subnets)
+  allocation_id = aws_eip.nat[count.index].id
+  subnet_id     = aws_subnet.public[count.index].id
 
-  tags = merge(
-    var.tags,
-    {
-      Name = "${var.cluster_name}-nat"
-    }
-  )
+  tags = {
+    Name        = "${var.environment}-nat-${var.azs[count.index]}"
+    Environment = var.environment
+  }
 }
 
-resource "aws_route_table" "route_table" {
-  vpc_id = aws_vpc.vpc.id
+resource "aws_route_table" "public" {
+  vpc_id = aws_vpc.main.id
 
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.gateway.id
+    gateway_id = aws_internet_gateway.main.id
   }
 
   tags = {
-    Name        = "${var.environment}-public-rt"
+    Name        = "${var.environment}-public"
     Environment = var.environment
   }
 }
 
 resource "aws_route_table" "private" {
-  vpc_id = aws_vpc.vpc.id
+  count  = length(var.private_subnets)
+  vpc_id = aws_vpc.main.id
 
   route {
-    cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.main.id
+    cidr_block = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.main[count.index].id
   }
 
-  tags = merge(
-    var.tags,
-    {
-      Name = "${var.cluster_name}-private-rt"
-    }
-  )
+  tags = {
+    Name        = "${var.environment}-private-${var.azs[count.index]}"
+    Environment = var.environment
+  }
 }
 
-resource "aws_route_table_association" "association" {
-  count          = length(var.public_subnet_cidrs)
-  subnet_id      = aws_subnet.subnet[count.index].id
-  route_table_id = aws_route_table.route_table.id
-
-  depends_on = [aws_internet_gateway.gateway, aws_route_table.route_table, aws_subnet.subnet]
+resource "aws_route_table_association" "public" {
+  count          = length(var.public_subnets)
+  subnet_id      = aws_subnet.public[count.index].id
+  route_table_id = aws_route_table.public.id
 }
 
 resource "aws_route_table_association" "private" {
-  count          = length(var.public_subnet_cidrs)
+  count          = length(var.private_subnets)
   subnet_id      = aws_subnet.private[count.index].id
-  route_table_id = aws_route_table.private.id
+  route_table_id = aws_route_table.private[count.index].id
 }

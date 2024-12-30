@@ -1,14 +1,10 @@
-output "instance_id" {
-  description = "ID of the EC2 instance"
-  value       = aws_instance.ec2_test.id
+# modules/ec2/outputs.tf
+output "launch_template_id" {
+  description = "ID of the launch template"
+  value       = aws_launch_template.main.id
 }
 
-output "public_ip" {
-  description = "Public IP of the EC2 instance"
-  value       = aws_instance.ec2_test.public_ip
-}
-
-output "public_dns" {
-  description = "Public DNS of the EC2 instance"
-  value       = aws_instance.ec2_test.public_dns
+output "autoscaling_group_name" {
+  description = "Name of the autoscaling group"
+  value       = aws_autoscaling_group.main.name
 }

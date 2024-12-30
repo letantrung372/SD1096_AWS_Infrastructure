@@ -1,16 +1,71 @@
-resource "aws_security_group" "ec2" {
-  name        = "${var.environment}-ec2-sg"
-  description = "Security group for EC2 instance"
+# modules/security_groups/main.tf
+resource "aws_security_group" "eks_cluster" {
+  name        = "${var.environment}-eks-cluster-sg"
+  description = "Security group for EKS cluster control plane"
   vpc_id      = var.vpc_id
 
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  tags = {
+    Name        = "${var.environment}-eks-cluster-sg"
+    Environment = var.environment
+  }
+}
+
+resource "aws_security_group" "eks_nodes" {
+  name        = "${var.environment}-eks-nodes-sg"
+  description = "Security group for EKS worker nodes"
+  vpc_id      = var.vpc_id
+
   ingress {
+    description = "Allow nodes to communicate with each other"
+    from_port   = 0
+    to_port     = 65535
+    protocol    = "-1"
+    self        = true
+  }
+
+  ingress {
+    description     = "Allow worker Kubelets and pods to receive communication from the cluster control plane"
+    from_port       = 1025
+    to_port         = 65535
+    protocol        = "tcp"
+    security_groups = [aws_security_group.eks_cluster.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name        = "${var.environment}-eks-nodes-sg"
+    Environment = var.environment
+  }
+}
+
+resource "aws_security_group" "ec2" {
+  name        = "${var.environment}-ec2-sg"
+  description = "Security group for EC2 instances"
+  vpc_id      = var.vpc_id
+
+  ingress {
+    description = "SSH access"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]  # Note: In production, restrict to specific IP ranges
+  }
+
+  ingress {
+    description = "HTTP access"
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
@@ -18,6 +73,7 @@ resource "aws_security_group" "ec2" {
   }
 
   ingress {
+    description = "HTTPS access"
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
@@ -32,38 +88,7 @@ resource "aws_security_group" "ec2" {
   }
 
   tags = {
-    Name = "${var.environment}-ec2-sg"
-  }
-
-  # Add Jenkins port
-  ingress {
-    from_port   = 8080
-    to_port     = 8080
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "Jenkins web interface"
-  }
-
-  # Add Jenkins agents port (optional, if you plan to use Jenkins agents)
-  ingress {
-    from_port   = 50000
-    to_port     = 50000
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "Jenkins agents communication"
-  }
-}
-
-resource "tls_private_key" "private_key" {
-  algorithm = "RSA"
-  rsa_bits  = 2048
-}
-
-resource "aws_key_pair" "ec2_key_pair" {
-  key_name   = var.key_name
-  public_key = tls_private_key.private_key.public_key_openssh
-
-  provisioner "local-exec" {
-    command = "echo '${tls_private_key.private_key.private_key_pem}' > ./ec2-keypair.pem"
+    Name        = "${var.environment}-ec2-sg"
+    Environment = var.environment
   }
 }

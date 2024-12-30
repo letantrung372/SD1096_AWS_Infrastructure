@@ -1,15 +1,10 @@
+# modules/security_groups/variables.tf
 variable "environment" {
   description = "Environment name"
   type        = string
 }
 
 variable "vpc_id" {
-  description = "VPC ID"
+  description = "ID of the VPC"
   type        = string
-}
-
-variable "key_name" {
-  description = "Name of the SSH key pair"
-  type        = string
-  default     = "ec2-keypair"
 }
