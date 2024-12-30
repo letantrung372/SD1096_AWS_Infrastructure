@@ -12,7 +12,6 @@ output "eks_info" {
   value = {
     cluster_name     = module.eks.cluster_name
     cluster_endpoint = module.eks.cluster_endpoint
-    cluster_role_arn = module.eks.cluster_role_arn
   }
 }
 
