@@ -15,49 +15,33 @@ provider "aws" {
 
 module "vpc" {
   source = "./modules/vpc"
-
-  environment    = var.environment
-  vpc_cidr      = var.vpc_cidr
-  azs           = var.azs
-  public_subnets  = var.public_subnets
-  private_subnets = var.private_subnets
-}
-
-module "iam" {
-  source = "./modules/iam"
-
-  environment = var.environment
-}
-
-module "security_groups" {
-  source = "./modules/security_groups"
-
-  environment = var.environment
-  vpc_id     = module.vpc.vpc_id
+  
+  vpc_cidr           = var.vpc_cidr
+  availability_zones = var.availability_zones
+  project_name       = var.project_name
 }
 
 module "ecr" {
   source = "./modules/ecr"
-
-  environment = var.environment
+  
+  repository_names = ["frontend", "backend"]
 }
 
 module "eks" {
   source = "./modules/eks"
-
-  environment     = var.environment
-  vpc_id         = module.vpc.vpc_id
-  subnet_ids     = module.vpc.private_subnet_ids
-  cluster_role_arn = module.iam.eks_cluster_role_arn
-  node_role_arn    = module.iam.eks_node_role_arn
+  
+  cluster_name    = "${var.project_name}-cluster"
+  vpc_id          = module.vpc.vpc_id
+  subnet_ids      = module.vpc.private_subnet_ids
+  node_group_name = "${var.project_name}-node-group"
 }
 
 module "ec2" {
   source = "./modules/ec2"
-
-  environment    = var.environment
-  vpc_id        = module.vpc.vpc_id
-  subnet_ids    = module.vpc.private_subnet_ids
-  instance_profile = module.iam.ec2_instance_profile_name
-  security_group_ids = [module.security_groups.ec2_sg_id]
+  
+  instance_name    = "${var.project_name}-bastion"
+  vpc_id           = module.vpc.vpc_id
+  subnet_id        = module.vpc.public_subnet_ids[0]
+  key_name         = var.key_name
+  instance_type    = var.instance_type
 }

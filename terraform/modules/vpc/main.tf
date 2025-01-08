@@ -5,8 +5,31 @@ resource "aws_vpc" "main" {
   enable_dns_support   = true
 
   tags = {
-    Name        = "${var.environment}-vpc"
-    Environment = var.environment
+    Name = "${var.project_name}-vpc"
+  }
+}
+
+resource "aws_subnet" "private" {
+  count             = length(var.availability_zones)
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = cidrsubnet(var.vpc_cidr, 8, count.index)
+  availability_zone = var.availability_zones[count.index]
+
+  tags = {
+    Name                              = "${var.project_name}-private-${count.index + 1}"
+    "kubernetes.io/role/internal-elb" = "1"
+  }
+}
+
+resource "aws_subnet" "public" {
+  count             = length(var.availability_zones)
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = cidrsubnet(var.vpc_cidr, 8, count.index + length(var.availability_zones))
+  availability_zone = var.availability_zones[count.index]
+
+  tags = {
+    Name                     = "${var.project_name}-public-${count.index + 1}"
+    "kubernetes.io/role/elb" = "1"
   }
 }
 
@@ -14,97 +37,19 @@ resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
 
   tags = {
-    Name        = "${var.environment}-igw"
-    Environment = var.environment
-  }
-}
-
-resource "aws_subnet" "public" {
-  count             = length(var.public_subnets)
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = var.public_subnets[count.index]
-  availability_zone = var.azs[count.index]
-
-  map_public_ip_on_launch = true
-
-  tags = {
-    Name        = "${var.environment}-public-${var.azs[count.index]}"
-    Environment = var.environment
-    "kubernetes.io/role/elb" = "1"
-  }
-}
-
-resource "aws_subnet" "private" {
-  count             = length(var.private_subnets)
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = var.private_subnets[count.index]
-  availability_zone = var.azs[count.index]
-
-  tags = {
-    Name        = "${var.environment}-private-${var.azs[count.index]}"
-    Environment = var.environment
-    "kubernetes.io/role/internal-elb" = "1"
-  }
-}
-
-resource "aws_eip" "nat" {
-  count  = length(var.public_subnets)
-  domain = "vpc"
-
-  tags = {
-    Name        = "${var.environment}-nat-${var.azs[count.index]}"
-    Environment = var.environment
+    Name = "${var.project_name}-igw"
   }
 }
 
 resource "aws_nat_gateway" "main" {
-  count         = length(var.public_subnets)
-  allocation_id = aws_eip.nat[count.index].id
-  subnet_id     = aws_subnet.public[count.index].id
+  allocation_id = aws_eip.nat.id
+  subnet_id     = aws_subnet.public[0].id
 
   tags = {
-    Name        = "${var.environment}-nat-${var.azs[count.index]}"
-    Environment = var.environment
+    Name = "${var.project_name}-nat"
   }
 }
 
-resource "aws_route_table" "public" {
-  vpc_id = aws_vpc.main.id
-
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.main.id
-  }
-
-  tags = {
-    Name        = "${var.environment}-public"
-    Environment = var.environment
-  }
-}
-
-resource "aws_route_table" "private" {
-  count  = length(var.private_subnets)
-  vpc_id = aws_vpc.main.id
-
-  route {
-    cidr_block = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.main[count.index].id
-  }
-
-  tags = {
-    Name        = "${var.environment}-private-${var.azs[count.index]}"
-    Environment = var.environment
-  }
-}
-
-resource "aws_route_table_association" "public" {
-  count          = length(var.public_subnets)
-  subnet_id      = aws_subnet.public[count.index].id
-  route_table_id = aws_route_table.public.id
-}
-
-resource "aws_route_table_association" "private" {
-  count          = length(var.private_subnets)
-  subnet_id      = aws_subnet.private[count.index].id
-  route_table_id = aws_route_table.private[count.index].id
+resource "aws_eip" "nat" {
+  domain = "vpc"
 }
