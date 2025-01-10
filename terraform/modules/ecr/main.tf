@@ -27,3 +27,23 @@ resource "aws_ecr_lifecycle_policy" "policy" {
     }]
   })
 }
+
+resource "aws_ecr_repository_policy" "public_access" {
+  count      = length(var.repositories)
+  repository = aws_ecr_repository.repo[count.index].name
+
+  policy = jsonencode({
+    Version = "2008-10-17",
+    Statement = [
+      {
+        Sid       = "AllowPublicRead",
+        Effect    = "Allow",
+        Principal = "*",
+        Action    = [
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchGetImage"
+        ]
+      }
+    ]
+  })
+}

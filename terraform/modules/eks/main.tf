@@ -47,6 +47,36 @@ resource "aws_iam_role" "eks_nodes" {
   })
 }
 
+resource "aws_iam_role_policy" "eks_nodes_ebs_policy" {
+  name = "${var.cluster_name}-ebs-policy"
+  role = aws_iam_role.eks_nodes.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ec2:AttachVolume",
+          "ec2:CreateSnapshot",
+          "ec2:CreateTags",
+          "ec2:CreateVolume",
+          "ec2:DeleteSnapshot",
+          "ec2:DeleteTags",
+          "ec2:DeleteVolume",
+          "ec2:DescribeInstances",
+          "ec2:DescribeSnapshots",
+          "ec2:DescribeTags",
+          "ec2:DescribeVolumes",
+          "ec2:DetachVolume",
+          "ec2:ModifyVolume"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 resource "aws_iam_role_policy_attachment" "eks_worker_node_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
   role       = aws_iam_role.eks_nodes.name
