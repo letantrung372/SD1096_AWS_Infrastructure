@@ -109,6 +109,11 @@ helm repo add prometheus-community https://prometheus-community.github.io/helm-c
 helm repo add grafana https://grafana.github.io/helm-charts
 helm repo update
 
+# Run in Git Bash
+helm pull prometheus-community/kube-prometheus-stack --version 48.1.1
+tar -xzf kube-prometheus-stack-48.1.1.tgz
+cp kube-prometheus-stack/values.yaml ./kube-prometheus-stack-values.yaml
+
 # Install Prometheus stack
 helm -n monitoring upgrade prometheus-grafana-stack --create-namespace --install prometheus-community/kube-prometheus-stack
 
